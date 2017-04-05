@@ -1,0 +1,17 @@
+{
+  "name": "tekken-chicken-server",
+  "version": "0.0.1",
+  "description": "Tekken Chicken Web App Server",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server/server.js"
+  },
+  "author": "Stephen Stafford",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "knex": "^0.12.8",
+    "pg": "^6.1.4"
+  }
+}
