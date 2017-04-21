@@ -1,4 +1,3 @@
-const knex = require('knex')({client: 'pg'})
 const express = require('express')
 const router = express.Router()
 
@@ -6,7 +5,7 @@ module.exports = function(pool) {
 
     //Base route provides info on the characters
     router.get('/', (req, res) => {
-        const query = knex.from('characters').toString();
+        const query = "SELECT * FROM characters"
 
         pool.connect().then(client => {
             client.query(query, null, (err, data) => {
@@ -33,11 +32,18 @@ module.exports = function(pool) {
 
     //Fetch all frame data in the database
     router.get('/all', (req, res) => {
+        /*
         const query = knex('characters')
         .select('characters.label', 'characters.name', 'attacks.notation', 'attacks.damage', 'attacks.speed',
                 'attacks.hit_level', 'attacks.on_block', 'attacks.on_hit', 'attacks.on_ch', 'attacks.notes')
         .innerJoin('attacks', 'characters.id', 'attacks.character_id')
         .toString()
+        */
+
+        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes"
+        + "FROM characters"
+        + "INNER JOIN attacks on characters.id=attacks.character_id"
 
         pool.connect().then(client => {
             client.query(query, null, (err, data) => {
@@ -81,12 +87,20 @@ module.exports = function(pool) {
 
     //Fetch frame data by character label
     router.get('/:label', (req, res, next) => {
+        /*
         const query = knex('characters')
         .where({label: req.params.label})
         .select('attacks.notation', 'attacks.hit_level', 'attacks.damage', 'attacks.speed',
                 'attacks.on_block', 'attacks.on_hit', 'attacks.on_ch', 'attacks.notes')
         .innerJoin('attacks', 'characters.id', 'attacks.character_id')
         .toString()
+        */
+
+        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes"
+        + `WHERE label=${req.params.label}`
+        + "FROM characters"
+        + "INNER JOIN attacks on characters.id=attacks.character_id"
 
         pool.connect().then(client => {
             client.query(query, null, (err, data) => {

@@ -1,6 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const knex = require('knex')({client: 'pg'})
 const { Pool, Query } = require('pg')
 
 //Database set up
@@ -49,7 +48,7 @@ function insertData() {
         const data = character.moves
 
 
-        const characterQuery = knex('characters').insert({name: name, label: label, game: game}).toString()
+        const characterQuery = buildInsertQuery('characters', {name: name, label: label, game: game})
         pool.connect().then(client => {
             client.query(characterQuery).then(() => {
                 return getCharacterId(name)
@@ -60,7 +59,7 @@ function insertData() {
                     let move = data[i]
                     move.character_id = id
 
-                    const moveQuery = knex('attacks').insert(move).toString()
+                    const moveQuery = buildInsertQuery('attacks', move)
                     let query = client.query(moveQuery).catch( (err) => {
                         console.log(`${err}\n${moveQuery}`)
                         process.exit(0)
@@ -75,7 +74,8 @@ function insertData() {
 }
 
 function getCharacterId(name) {
-    const query = knex('characters').select('id').where({name: name}).toString()
+    //const query = knex('characters').select('id').where({name: name}).toString();
+    const query = `SELECT id FROM characters WHERE name=${name}`
 
     return pool.connect().then(client => {
         return client.query(query).then(res => {
@@ -91,9 +91,21 @@ function getCharacterId(name) {
     })
 }
 
-function buildMoveQuery(id, move) {
-    move.character_id = id;
-    return knex.insert()
+function buildInsertQuery(table, options) {
+    let keys = options.keys;
+
+    let columns = `(${keys[0]}`
+    let data = '(${options[keys[0]]}'
+
+    for(let i = 1; i < keys.length; i++) {
+        columns = columns.concat(`,${keys[i]}`)
+        data = data.concat(`,${options[keys[i]]}`)
+    }
+
+    columns = columns.concat(')')
+    data = data.concat(')')
+
+    return `INSERT INTO ${table} ${columns} VALUES ${data};`
 }
 
 buildSchema().then(() => {
