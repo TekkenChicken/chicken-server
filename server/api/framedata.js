@@ -1,68 +1,81 @@
-const express = require('express')
-const router = express.Router()
+//Node Modules
+const mysql     = require('mysql')
+const express   = require('express')
+const router    = express.Router()
 
+//Database Table Names
+const _CharactersTable  = 'Characters_TC'
+const _AttacksTable     = 'Attacks_TC'
+
+//API Function
 module.exports = function(pool) {
 
-    //Base route provides info on the characters
+
     router.get('/', (req, res) => {
-        const query = "SELECT * FROM characters"
+        //Base route returns all character info
+        const query = `SELECT * FROM ${_CharactersTable}`
 
-        pool.connect().then(client => {
-            client.query(query, null, (err, data) => {
-                client.release()
+        pool.getConnection((err, connection) => {
+            if(err) {
+                console.log(err.code)
+                res.status(500).send(err)
+                return;
+            }
 
+            connection.query(query, (err, results, fields) => {
+                connection.release()
                 if(err) {
-                    res.status(500).send(err.text)
-                    return;
-                } else {
-                    let formatted = data.rows.reduce((acc, row) => {
-                        acc[row.label] = row
-                        return acc
-                    }, {})
-
-                    res.json(formatted)
+                    console.log(err.code)
+                    res.status(500).send(err)
                     return;
                 }
 
+                //Response returns hash full of character objects indexed by character label
+                let formatted = results.reduce((acc, row) => {
+                    acc[row.label] = row
+                    return acc
+                }, {})
+
+                res.json(formatted)
+                return;
             })
-        }).catch(err => {
-            res.status(500).send(err)
         })
+
     })
 
-    //Fetch all frame data in the database
+
     router.get('/all', (req, res) => {
-        /*
-        const query = knex('characters')
-        .select('characters.label', 'characters.name', 'attacks.notation', 'attacks.damage', 'attacks.speed',
-                'attacks.hit_level', 'attacks.on_block', 'attacks.on_hit', 'attacks.on_ch', 'attacks.notes')
-        .innerJoin('attacks', 'characters.id', 'attacks.character_id')
-        .toString()
-        */
+        //Thsi route returns a huge frame data blob
 
         const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes"
-        + "FROM characters"
-        + "INNER JOIN attacks on characters.id=attacks.character_id"
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
+        + `FROM ${_CharactersTable} AS characters `
+        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
 
-        pool.connect().then(client => {
-            client.query(query, null, (err, data) => {
-                client.release()
+        pool.getConnection((err, connection) => {
+            if(err) {
+                console.log(`Error at ${req.route}: ${err.code}`)
+                res.status(500).send(err)
+                return;
+            }
+
+            connection.query(query, (err, results) => {
+                connection.release()
 
                 if(err) {
+                    console.log(`Error at ${req.route.path}: ${err.code}`)
                     res.status(500).send(err)
                     return;
                 }
 
                 //Response returns hash full of character objects indexed by character label
                 //Character objects contain character names, label, and data
-
-                let formatted = data.rows.reduce((acc, row) => {
+                let formatted = results.reduce((acc, row) => {
                     if(!acc[row.label]) {
                         acc[row.label] = { name: row.name, label: row.label, data: [] }
                     }
 
-                    //TODO: SORT THE FRAME DATA JESUS CHRIST
+                    //PUT THE FRAME DATA SORT MAGIC HERE
                     acc[row.label].data.push({
                         notation: row.notation,
                         hitLevel: row.hit_level,
@@ -78,42 +91,53 @@ module.exports = function(pool) {
 
                 }, {})
 
-
                 res.json(formatted)
                 return;
+            })
+
         })
-        })
+
     })
 
-    //Fetch frame data by character label
-    router.get('/:label', (req, res, next) => {
-        /*
-        const query = knex('characters')
-        .where({label: req.params.label})
-        .select('attacks.notation', 'attacks.hit_level', 'attacks.damage', 'attacks.speed',
-                'attacks.on_block', 'attacks.on_hit', 'attacks.on_ch', 'attacks.notes')
-        .innerJoin('attacks', 'characters.id', 'attacks.character_id')
-        .toString()
-        */
 
-        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes"
-        + `WHERE label=${req.params.label}`
-        + "FROM characters"
-        + "INNER JOIN attacks on characters.id=attacks.character_id"
+    router.get('/:id', (req, res, next) => {
+        //Fetch frame data by character label
+        const sql = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
+        + `FROM ${_CharactersTable} AS characters `
+        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id=attacks.character_id `
+        + "WHERE ?? = ?;"
 
-        pool.connect().then(client => {
-            client.query(query, null, (err, data) => {
-                client.release()
+        let inserts = []
 
+        if(parseInt(req.params.id)) {
+            //End user passes in an ID
+            inserts = ['id', req.params.id]
+        } else {
+            //End user passes in a label
+            inserts = ['label', req.params.id]
+        }
+
+        const query = mysql.format(sql, inserts)
+        console.log(query)
+        pool.getConnection((err, connection) => {
+            if(err) {
+                console.log(err.code)
+                res.status(500).send(err)
+                return;
+            }
+
+            connection.query(query, (err, results) => {
+                connection.release()
                 if(err) {
+                    console.log(`Error at ${req.route.path}: ${err.code}`)
                     res.status(500).send(err)
                     return;
-                } else {
-                    //TODO: SORT. IT.
-                    res.json(data.rows)
-                    return;
                 }
+
+                //Hey sort these bruh
+                res.json(results)
+                return;
             })
         })
 

@@ -1,45 +1,82 @@
-const fs = require('fs')
-const path = require('path')
-const { Pool, Query } = require('pg')
+//Node Modules
+const fs        = require('fs')
+const path      = require('path')
+const mysql     = require('mysql')
+
+//Database table names
+const _CharactersTable  = 'Characters_TC'
+const _AttacksTable     = 'Attacks_TC'
 
 //Database set up
-const _USER = process.env.PG_USER
-const _PASS = process.env.PG_PASS
-const _DB = process.env.PG_DB || 'tekken-chicken'
-const _HOST = process.env.PG_HOST || 'localhost'
-const _PORT = process.env.PG_PORT || 5432
+const _USER     = process.env.DB_USER
+const _PASS     = process.env.DB_PASS
+const _DB       = process.env.DB_NAME || 'tekkenchicken'
+const _HOST     = process.env.DB_HOST || 'localhost'
+const _PORT     = process.env.DB_PORT || 3306
 
-let pool = new Pool({
+let pool = mysql.createPool({
     user: _USER,
     password: _PASS,
     database: _DB,
     host: _HOST,
     port: _PORT,
-    max: 50, 
-    idleTimeoutMillis: 30000
+    connectionLimit: 50, 
+    connectTimeout: 30000
 })
+
 
 const initTimestamp = Math.floor(Date.now() / 1000)
 
+//Build schema
+console.log('Structuring database.')
 
-const schema = new Query(fs.readFileSync(path.join(__dirname, 'schema.sql'), {encoding: 'utf8'}))
+const characterSchema = fs.readFileSync(path.join(__dirname, 'schema/characters.sql'), {encoding: 'utf-8'})
+const attacksSchema = fs.readFileSync(path.join(__dirname, 'schema/attacks.sql'), {encoding: 'utf-8'})
 
-function buildSchema() {
-    console.log('Structuring database.')
-
-    return pool.connect().then(client => {
-        return client.query(schema).then(() => client.release(), err => {
-            client.release
-        })
-    }, err => {
+pool.getConnection((err, connection) => {
+    if(err) {
         console.log(err)
-        process.exit(0)
+        process.exit(-1)
+    }
+
+    connection.query(characterSchema, (err) => {
+        if(err) {
+            if(err.code == 'ER_TABLE_EXISTS_ERROR') {
+                console.log(`ERROR: Table already exists: ${_CharactersTable}. Cannot initialize.`)
+                process.exit(-1)
+            } else {
+                console.log(err)
+                process.exit(-1)
+            }
+        }
+
+        connection.query(attacksSchema, (err) => {
+            if(err) {
+                if(err.code == 'ER_TABLE_EXISTS_ERROR') {
+                    console.log(`ERROR: Table already exists: ${_AttacksTable}. Cannot initialize.`)
+                    process.exit(-1)
+                } else {
+                    console.log(err)
+                    process.exit(-1)
+                }
+            }
+
+            console.log('Schema created')
+            connection.release()
+
+            //Insert character data into fresh database
+            insertData()
+        })
+
+
     })
-}
+})
 
 
-function insertData() {
+//Insert Character Data
+function insertData() { 
     const characters = require('./json/framedata.js')
+    var completedCharacters = 0;
 
     for(character of characters) {
         const name = character.metadata.name
@@ -48,31 +85,67 @@ function insertData() {
         const data = character.moves
 
 
-        const characterQuery = buildInsertQuery('characters', {name: name, label: label, game: game})
-        pool.connect().then(client => {
-            client.query(characterQuery).then(() => {
-                return getCharacterId(name)
-            })
-            .then(id => {
+        const characterQuery = buildInsertQuery(_CharactersTable, {name: name, label: label, game: game, last_updated: initTimestamp})
+
+        pool.getConnection((err, connection) => {
+            connection.query(characterQuery, (err, results) => {
+                if(err) {
+                    console.log(`Error creating character ${name}.\nError: ${err.message}`)
+                    process.exit(-1)
+                }
+                //Character created
+                //Insert move data
                 console.log(`Inserting move data for ${name}`)
+
+                let id = (results.insertId)
                 for(let i = 0; i < data.length; i++) {
                     let move = data[i]
                     move.character_id = id
 
-                    const moveQuery = buildInsertQuery('attacks', move)
-                    let query = client.query(moveQuery).catch( (err) => {
-                        console.log(`${err}\n${moveQuery}`)
-                        process.exit(0)
+                    const moveQuery = buildInsertQuery(_AttacksTable, move)
+                    let query = connection.query(moveQuery, (err) => {
+                        if(err) {
+                            console.log(`Error inserting move. Query: ${moveQuery}\nError: ${err.message}`)
+                            process.exit(-1)
+                        }
+
+                        //Let go of connection after final query
+                        if(i == data.length - 1) {
+                            completedCharacters++
+                            console.log(`${name} completed. ${completedCharacters}/${characters.length}`)
+                            connection.release()
+
+                            if(completedCharacters == characters.length) {
+                                pool.end()
+                            }
+                        }
                     })
 
-                    if(i == data.length - 1)
-                        query.then(() => client.release())
                 }
             })
         })
     }
 }
 
+function buildInsertQuery(table, options) {
+    let keys = Object.keys(options);
+
+    let columns = `(${keys[0]}`
+    let data = `('${options[keys[0]]}'`
+
+    for(let i = 1; i < keys.length; i++) {
+        columns = columns.concat(`,${keys[i]}`)
+        data = data.concat(`,'${options[keys[i]]}'`)
+    }
+
+    columns = columns.concat(')')
+    data = data.concat(')')
+
+
+    return `INSERT INTO ${table} ${columns} VALUES ${data};`
+}
+
+/*
 function getCharacterId(name) {
     //const query = knex('characters').select('id').where({name: name}).toString();
     const query = `SELECT id FROM characters WHERE name=${name}`
@@ -90,24 +163,4 @@ function getCharacterId(name) {
         process.exit(0)
     })
 }
-
-function buildInsertQuery(table, options) {
-    let keys = options.keys;
-
-    let columns = `(${keys[0]}`
-    let data = '(${options[keys[0]]}'
-
-    for(let i = 1; i < keys.length; i++) {
-        columns = columns.concat(`,${keys[i]}`)
-        data = data.concat(`,${options[keys[i]]}`)
-    }
-
-    columns = columns.concat(')')
-    data = data.concat(')')
-
-    return `INSERT INTO ${table} ${columns} VALUES ${data};`
-}
-
-buildSchema().then(() => {
-    insertData()
-})
+*/

@@ -8,11 +8,11 @@ node server/database/init.js
 npm start
 ```
 
-### NOTE: This server uses the following environment variables to connect to your PG database:
+### NOTE: This server uses the following environment variables to connect to your MySQL database:
 ```
-PG_USER
-PG_PASS
-PG_DB(Optional, defaults to "tekken-chicken")
-PG_HOST(Optional, defaults to "localhost")
-PG_PORT(Optional, defaults to "5432")
+DB_USER
+DB_PASS
+DB_NAME(Optional, defaults to "tekkenchicken")
+DB_HOST(Optional, defaults to "localhost")
+DB_PORT(Optional, defaults to "3306")
 ```
