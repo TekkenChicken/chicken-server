@@ -86,7 +86,7 @@ module.exports = function(pool) {
         }
 
         const query = mysql.format(sql, inserts)
-        console.log(query)
+
         pool.getConnection((err, connection) => {
             if(err) {
                 console.log(err.code)
@@ -102,9 +102,30 @@ module.exports = function(pool) {
                     return;
                 }
 
-                //Hey sort these bruh
-                res.json(results[0])
-                return;
+                if(results[0]) {
+                    let name = results[0].name;
+                    let label = results[0].label;
+
+                    let data = results.reduce((acc, row) => {
+                        acc.push({
+                            notation: row.notation,
+                            hitLevel: row.hit_level,
+                            damage: row.damage,
+                            speed: row.speed,
+                            on_block: row.on_block,
+                            on_hit: row.on_hit,
+                            on_ch: row.on_ch,
+                            notes: row.notes
+                        })
+
+                        return acc
+                    }, [])
+
+                    //Hey sort these bruh
+                    res.json({name: name, label: label, data: data})
+                    return;
+                }
+                res.json({})
             })
         })
 
