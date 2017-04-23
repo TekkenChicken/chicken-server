@@ -103,7 +103,7 @@ module.exports = function(pool) {
                 }
 
                 //Hey sort these bruh
-                res.json(results)
+                res.json(results[0])
                 return;
             })
         })
