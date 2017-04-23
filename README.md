@@ -26,10 +26,11 @@ http://tc.tekkengamer.com/api/metadata/
 ```
 A Metadata Request returns an object containing all information about all the character data in the database. It contains key data for accessing other info like character ids and labels.
 
-**Sample Response**
+**Sample Request**
 ```
 GET http://tc.tekkengamer.com/api/metadata/
 ```
+**Sample Response**
 ```json
 {
   "alisa" : {
@@ -48,10 +49,11 @@ http://tc.tekkengamer.com/api/framedata/
 ```
 This is your primary giant blob request. It returns an object full of all characters' framedata indexed by the characters' labels.
 
-**Sample Response**
+**Sample Request**
 ```
 GET http://tc.tekkengamer.com/api/framedata/
 ```
+**Sample Response**
 ```json
 {
   "alisa": {
@@ -78,10 +80,11 @@ http://tc.tekkengamer.com/api/framedata/{id|label}
 ```
 You can request frame data for individual characters using their id or label
 
-**Sample Response**
-```htttp
+**Sample Request**
+```
 GET http://tc.tekkengamer.com/api/framedata/bryan
 ```
+**Sample Response**
 ```json
 {
   "name" : "Bryan Fury",
