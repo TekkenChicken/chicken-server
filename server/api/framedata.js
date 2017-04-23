@@ -69,23 +69,22 @@ module.exports = function(pool) {
 
     router.get('/:id', (req, res, next) => {
         //Fetch frame data by character label
-        const sql = "SELECT characters.label, characters.name, attacks.notation, attacks.stance, attacks.damage, attacks.speed,"
+        let query = "SELECT characters.label, characters.name, attacks.notation, attacks.stance, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
         + `FROM ${_CharactersTable} AS characters `
         + `INNER JOIN ${_AttacksTable} AS attacks on characters.id=attacks.character_id `
-        + "WHERE ?? = ?;"
 
-        let inserts = []
 
+        let id = mysql.escape(req.params.id)
+        let field = '`label`'
+        //If user passes in int
         if(parseInt(req.params.id)) {
-            //End user passes in an ID
-            inserts = ['id', req.params.id]
-        } else {
-            //End user passes in a label
-            inserts = ['label', req.params.id]
+            field = '`id`'
+            id = parseInt(req.params.id)
         }
 
-        const query = mysql.format(sql, inserts)
+        query += `WHERE ${field} = ${id};`
+        console.log(query)
 
         pool.getConnection((err, connection) => {
             if(err) {
