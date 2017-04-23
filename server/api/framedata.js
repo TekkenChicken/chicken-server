@@ -14,7 +14,7 @@ module.exports = function(pool) {
     router.get('/', (req, res) => {
         //Thsi route returns a huge frame data blob
 
-        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.stance, attacks.damage, attacks.speed,"
+        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
         + `FROM ${_CharactersTable} AS characters `
         + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
