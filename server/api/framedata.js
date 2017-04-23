@@ -12,42 +12,9 @@ module.exports = function(pool) {
 
 
     router.get('/', (req, res) => {
-        //Base route returns all character info
-        const query = `SELECT * FROM ${_CharactersTable}`
-
-        pool.getConnection((err, connection) => {
-            if(err) {
-                console.log(err.code)
-                res.status(500).send(err)
-                return;
-            }
-
-            connection.query(query, (err, results, fields) => {
-                connection.release()
-                if(err) {
-                    console.log(err.code)
-                    res.status(500).send(err)
-                    return;
-                }
-
-                //Response returns hash full of character objects indexed by character label
-                let formatted = results.reduce((acc, row) => {
-                    acc[row.label] = row
-                    return acc
-                }, {})
-
-                res.json(formatted)
-                return;
-            })
-        })
-
-    })
-
-
-    router.get('/all', (req, res) => {
         //Thsi route returns a huge frame data blob
 
-        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
+        const query = "SELECT characters.label, characters.name, attacks.notation, attacks.stance, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
         + `FROM ${_CharactersTable} AS characters `
         + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
@@ -102,7 +69,7 @@ module.exports = function(pool) {
 
     router.get('/:id', (req, res, next) => {
         //Fetch frame data by character label
-        const sql = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
+        const sql = "SELECT characters.label, characters.name, attacks.notation, attacks.stance, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
         + `FROM ${_CharactersTable} AS characters `
         + `INNER JOIN ${_AttacksTable} AS attacks on characters.id=attacks.character_id `
