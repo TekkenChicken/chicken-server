@@ -1,3 +1,12 @@
+CREATE TABLE Characters_TC (
+    id INT(3) NOT NULL AUTO_INCREMENT,
+    name VARCHAR(30) NOT NULL,
+    label VARCHAR(10) NOT NULL,
+    game VARCHAR(4) NOT NULL,
+    last_updated INT(11) NOT NULL,
+    PRIMARY KEY(id)
+) CHARACTER SET utf8mb4;
+
 CREATE TABLE Attacks_TC (
     character_id INT(3),
     notation VARCHAR(100) NOT NULL,
