@@ -2,6 +2,7 @@
 const bcrypt    = require('bcrypt')
 const uuid      = require('uuid/v4')
 const express   = require('express')
+const mysql     = require('mysql')
 const router    = express.Router()
 
 //Database Tables
@@ -14,6 +15,32 @@ var sessions = new Map()
 
 
 module.exports = function(pool) {
+
+    router.get('/', (req, res) => {
+        const accountName   = req.query.accountName;
+        const displayName   = req.query.displayName;
+        const email         = req.query.email;
+        const password      = req.query.password;
+
+        if(!accountName || !displayName || !email || !password) {
+            res.status(400).send('Missing parameters');
+            console.log('###accountName: ' + accountName)
+            console.log('###displayName: ' + displayName)
+            console.log('###email: ' + email)
+            console.log('###password: ' + password)
+            return;
+        }
+
+        createUser(accountName, password, email, displayName, (err, results) => {
+            if(err) {
+                res.status(err.httpCode).send(err.message)
+                return;
+            }
+
+            res.send('User successfully created.')
+        }) 
+
+    })
 
     router.post('/authenticate', (req, res) => {
         if(!req.params.username || !req.params.password) {
@@ -38,8 +65,88 @@ module.exports = function(pool) {
         })
     })
 
+    function createUser(aName, pass, userEmail, display, cb) {
+    const SALT          = 10
+
+    const accountName   = mysql.format(aName)
+    const email         = mysql.format(userEmail)
+    const displayName   = mysql.format(display)
+
+    const existingUserCheck = `SELECT (accountName, email, displayName) ` +
+                                `FROM ${_USERTABLE} ` + 
+                                `WHERE (accountName = ${accountName} OR email = ${email} OR displayName = ${displayName}`
+
+
+    pool.getConnection((err, connection) => {
+        if(err) {
+            let error = new Error('Error querying database.')
+            error.httpCode = 500
+            error.code = err.code
+            cb(err, null)
+            return;
+        }
+
+        connection.query(existingUserCheck, (err, results) => {
+            //If this query returned results then there is a user with a matching field
+            if(results) {
+                connection.release()
+
+                let user = resutls[0]
+                let sharedField = ''
+
+                if(user.accountName == accountName) {
+                    sharedField == 'account name'
+                } 
+                else if(user.email == email) {
+                    sharedField == 'email address'
+                } 
+                else if(user.displayName == displayName) {
+                    sharedField == 'display name'
+                }
+
+                let error = new Error('An account already exists using this ${sharedField}.')
+                error.httpCode = 400
+                error.sharedField = sharedField
+                cb(err, null)
+                return;
+            }
+
+            //Hash password and create user
+            bcrypt.hash(pass, SALT, (err, hashedPass) => {
+                if(err) {
+                    connection.release()
+
+                    err.httpCode = 500
+                    cb(err, null)
+                    return;
+                }
+
+                const insertQuery = `INSERT INTO ${_USERTABLE} ` + 
+                                    `(\`accountName\`, \`hashedPass\`, \`email\`, \`displayName\`) ` +
+                                    `VALUES ('${accountName}', '${hashedPass}', '${email}', '${displayName}')`
+                console.log(insertQuery)
+                connection.query(insertQuery, (err, results) => {
+                    connection.release()
+
+                    if(err) {
+                        err.httpCode = 500
+                        cb(err, null)
+                        return;
+                    }
+
+                    //TODO: Build session and pass to callback
+                    cb(null, {status: 'Success'})
+                    return;
+                })
+            })
+        })
+    })
+}
+
     return router
 }
+
+
 
 function authenticate(accountName, plainTextPass, cb) {
     let query = `SELECT Users.hashedPass, Perms.
@@ -49,7 +156,7 @@ function authenticate(accountName, plainTextPass, cb) {
 
     pool.getConnection((err, connection) => {
         if(err) {
-            let error = new Error('Error connecting to database.');
+            let error = new Error('Error connecting to database.')
             error.httpCode = 500
             error.code = err.code
             cb(error, null)
