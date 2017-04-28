@@ -20,8 +20,10 @@ let pool = mysql.createPool({
 
 const FrameData = require('./framedata.js')(pool)
 const MetaData  = require('./metadata.js')(pool)
+const Users     = require('./users.js')(pool)
 
 router.use('/framedata', FrameData)
 router.use('/metadata', MetaData)
+router.use('/user', Users)
 
 module.exports = router
