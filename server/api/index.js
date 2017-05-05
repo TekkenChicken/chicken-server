@@ -18,11 +18,11 @@ let pool = mysql.createPool({
     connectTimeout: 30000
 })
 
-const FrameData = require('./framedata.js')(pool)
+const Framedata = require('./framedata/router.js')(pool)
 const MetaData  = require('./metadata.js')(pool)
 const Users     = require('./users.js')(pool)
 
-router.use('/framedata', FrameData)
+router.use('/framedata', Framedata)
 router.use('/metadata', MetaData)
 router.use('/user', Users)
 
