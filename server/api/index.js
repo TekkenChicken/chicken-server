@@ -19,11 +19,11 @@ let pool = mysql.createPool({
 })
 
 const Framedata = require('./framedata/router.js')(pool)
-const MetaData  = require('./metadata.js')(pool)
 const Users     = require('./users/router.js')(pool)
+const Metadata  = require('./metadata/router.js')(pool)
 
 router.use('/framedata', Framedata)
-router.use('/metadata', MetaData)
+router.use('/metadata', Metadata)
 router.use('/user', Users)
 
 module.exports = router

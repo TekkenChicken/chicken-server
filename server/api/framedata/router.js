@@ -14,8 +14,10 @@ module.exports = function(pool) {
     })
 
     router.get('/:id', (req, res) => {
-        controller.getData(req.params.id)
+        controller.getCharacterData(req.params.id)
         .then( data => res.json(data) )
         .catch( err => res.status(500).send(err) )
     })
+
+    return router
 }

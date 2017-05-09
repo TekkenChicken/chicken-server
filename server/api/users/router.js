@@ -28,17 +28,23 @@ module.exports = function(pool) {
         })
     })
 
-    router.post('/login', (req, res) => {
-        if(req.params.accountName || !req.params.password) {
+    router.get('/login', (req, res) => {
+        let accountName = req.query.accountName
+        let password = req.query.password
+
+        if(!accountName || !password) {
             res.status(400).send({message: 'Missing Parameters', success: false})
             return;
         }
 
-        controller.login(req.params.accountName, req.params.password)
+        controller.login(accountName, password)
         .then(results => {
+            console.log(results)
             res.json(results)
         }, err => {
             res.json(err)
         })
     })
+
+    return router
 }

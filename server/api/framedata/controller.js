@@ -117,7 +117,7 @@ class FramedataController {
                     resolve(formatted)
                     return;
                 })
-            }
+            })
         })
     }
 

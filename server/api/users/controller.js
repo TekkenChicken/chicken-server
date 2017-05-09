@@ -11,9 +11,9 @@ const _USERPERMTABLE = 'Permissions_Users_TC'
 const _SESSIONTIME = 86400  //1 day represented in seconds
 
 //Bcrypt salt roundserr
-const _SALT = 50
+const _SALT = 10
 
-class UsersController() {
+class UsersController {
     constructor(pool) {
         this.pool = pool;
         this.sessions = new Map()
@@ -24,9 +24,9 @@ class UsersController() {
         const email         = mysql.format(options.email)
         const displayName   = mysql.format(options.displayName)
 
-        const existingUserCheck = `SELECT (accountName, email, displayName) ` +
+        const existingUserCheck = `SELECT accountName, email, displayName ` +
                                     `FROM ${_USERTABLE} ` + 
-                                    `WHERE (accountName = ${accountName} OR email = ${email} OR displayName = ${displayName}`
+                                    `WHERE (accountName = '${accountName}' OR email ='${email}' OR displayName = '${displayName}')`
 
         return new Promise((resolve, reject) => {           
             this.pool.getConnection((err, connection) => {
@@ -40,22 +40,23 @@ class UsersController() {
                     if(results) {
                         connection.release()
 
-                        let user = resutls[0]
+                        let user = results[0]
                         let sharedField = ''
 
-                        if(user.accountName == accountName) {
-                            sharedField == 'account name'
+                        if(mysql.format(user.accountName) == accountName) {
+                            sharedField = 'account name'
                         } 
-                        else if(user.email == email) {
-                            sharedField == 'email address'
+                        else if(mysql.format(user.email) == email) {
+                            sharedField = 'email address'
                         } 
-                        else if(user.displayName == displayName) {
-                            sharedField == 'display name'
+                        else if(mysql.format(user.displayName) == displayName) {
+                            sharedField = 'display name'
                         }
 
-                        reject({message: 'A user already exists with this ${sharedField}.'})
+                        reject({message: `A user already exists with this ${sharedField}.`})
                         return;
                     }
+
 
                     bcrypt.hash(options.password, _SALT, (err, hashedPass) => {
                         if(err) {
@@ -88,12 +89,14 @@ class UsersController() {
     }
 
     authenticate(accountName, plainTextPass) {
+        accountName = mysql.format(accountName)
+
         let query = `SELECT Users.hashedPass ` +
                         `FROM ${_USERTABLE} AS Users ` +
-                        `WHERE accountName=${accountName}`
+                        `WHERE accountName='${accountName}'`
 
         return new Promise((resolve, reject) => {
-            this.pool.getConection((err, connection) => {
+            this.pool.getConnection((err, connection) => {
                 if(err) {
                     reject(err)
                     return;
@@ -111,8 +114,9 @@ class UsersController() {
                         return;
                     }
 
-                    let hashedPass = results[0].hashedPass;
-                    bcrypt.compare(accountName, plainTextPass, (err, isAuthorized) => {
+                    let hashedPass = results[0].hashedPass.toString();
+
+                    bcrypt.compare(plainTextPass, hashedPass, (err, isAuthorized) => {
                         if(err) {
                             reject(err)
                             return;
@@ -127,14 +131,19 @@ class UsersController() {
     }
 
     login(accountName, plainTextPass) {
+        let response = {success: false, session: {}}
+
         return this.authenticate(accountName, plainTextPass)
         .then((isAuthorized) => {
             if(isAuthorized) {
-                let session = _buildSession(accountName)
-                return {success: true, session: session}
-            } else {
-                return {success: false}
+                let session = this._buildSession(accountName)
+                response = {success: true, session: session}
             }
+
+            return response
+        }, (err) => {
+            console.log('Goodbye?')
+            return err.message
         })
     }
 
@@ -158,7 +167,7 @@ class UsersController() {
         let accessToken;
         do {
             accessToken = uuid()
-        } while (sessions.has(accessToken))
+        } while (this.sessions.has(accessToken))
 
         //Expiration time
         let expirationTime = Date.now() + (_SESSIONTIME * 1000)
@@ -173,3 +182,5 @@ class UsersController() {
         return session;
     }
 }
+
+module.exports = UsersController
