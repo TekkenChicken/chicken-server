@@ -4,6 +4,7 @@
   "description": "Tekken Chicken Web App Server",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "init": "node server/database/init.js",
     "start": "node server/server.js"
   },
   "author": "Stephen Stafford",
