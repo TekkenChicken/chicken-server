@@ -6,8 +6,8 @@ const _CharactersTable  = 'Characters_TC'
 const _AttacksTable     = 'Attacks_TC'
 
 class FramedataController {
-    constructor(pool) {
-        this.pool = pool
+    constructor(store) {
+        this.$store = store
     }
 
     getCharacterData(identifier) {
@@ -29,12 +29,7 @@ class FramedataController {
         query += `WHERE ${field} = ${id};`
 
         return new Promise((resolve, reject) => {
-            this.pool.getConnection((err, connection) => {
-                if(err) {
-                    reject(err)
-                    return;
-                }
-
+            this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(query, (err, results) => {
                     if(err) {
                         reject(err)
@@ -67,7 +62,7 @@ class FramedataController {
 
                 resolve({})
                 })
-            })
+            }, err => reject(err))
         })
 
     }
@@ -79,12 +74,7 @@ class FramedataController {
         + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
 
         return new Promise((resolve, reject) => {
-            this.pool.getConnection((err, connection) => {
-                if(err) {
-                    reject(err)
-                    return;
-                }
-
+            this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(query, (err, results) => {
                     connection.release()
                     if(err) {
@@ -117,7 +107,7 @@ class FramedataController {
                     resolve(formatted)
                     return;
                 })
-            })
+            }, err => reject(err))
         })
     }
 

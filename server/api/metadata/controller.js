@@ -1,20 +1,15 @@
 const _CharactersTable  = 'Characters_TC'
 
 class MetadataController {
-    constructor(pool) {
-        this.pool = pool
+    constructor(store) {
+        this.$store = store
     }
 
     getMetadata() {
         const query = `SELECT * FROM ${_CharactersTable}`
 
         return new Promise((resolve, reject) => {
-            this.pool.getConnection((err, connection) => {
-                if(err) {
-                    reject(err)
-                    return;
-                }
-
+            this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(query, (err, results) => {
                     if(err) {
                         reject(rer)
@@ -24,7 +19,7 @@ class MetadataController {
                     resolve(this._format(results))
                     return;
                 })
-            })
+            }, err => reject(err))
         })
     }
 

@@ -4,8 +4,8 @@ const router    = express.Router()
 
 const MetadataController = require('./controller.js')
 
-module.exports = function(pool) {
-    let controller = new MetadataController(pool)
+module.exports = function($store) {
+    let controller = new MetadataController($store)
 
     router.get('/', (req, res) => {
         controller.getMetadata().then(data => {

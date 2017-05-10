@@ -14,9 +14,8 @@ const _SESSIONTIME = 86400  //1 day represented in seconds
 const _SALT = 10
 
 class UsersController {
-    constructor(pool) {
-        this.pool = pool;
-        this.sessions = new Map()
+    constructor(store) {
+        this.$store = store
     }
 
     createUser(options) {
@@ -29,12 +28,7 @@ class UsersController {
                                     `WHERE (accountName = '${accountName}' OR email ='${email}' OR displayName = '${displayName}')`
 
         return new Promise((resolve, reject) => {           
-            this.pool.getConnection((err, connection) => {
-                if(err) {
-                    reject(err)
-                    return
-                }
-
+            this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(existingUserCheck, (err, results) => {
                     //If this query returned results then there is a user with a matching field
                     if(results) {
@@ -78,13 +72,13 @@ class UsersController {
                             }
 
                             //Build new session
-                            let session = this._buildSession(accountName)
+                            let session = this.$store.newSession(accountName)
                             resolve(session)
                             return;
                         })
                     })
                 })
-            })
+            }, err => reject(err))
         })
     }
 
@@ -96,11 +90,7 @@ class UsersController {
                         `WHERE accountName='${accountName}'`
 
         return new Promise((resolve, reject) => {
-            this.pool.getConnection((err, connection) => {
-                if(err) {
-                    reject(err)
-                    return;
-                }
+            this.$store.getDatabaseConnection().then((connection) => {
 
                 connection.query(query, (err, results) => {
                     connection.release()
@@ -126,23 +116,25 @@ class UsersController {
                         return;
                     })
                 })
-            })          
+            }, err => reject(err))          
         })
     }
 
     login(accountName, plainTextPass) {
         let response = {success: false, session: {}}
 
+        console.log('We bout to try to login my guy')
         return this.authenticate(accountName, plainTextPass)
         .then((isAuthorized) => {
+            console.log('We finished authenticating my guy')
             if(isAuthorized) {
-                let session = this._buildSession(accountName)
+                console.log('Creating session...')
+                let session = this.$store.newSession(accountName)
                 response = {success: true, session: session}
             }
 
             return response
         }, (err) => {
-            console.log('Goodbye?')
             return err.message
         })
     }

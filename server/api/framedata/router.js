@@ -4,8 +4,8 @@ const router    = express.Router()
 
 const FramedataController = require('./controller.js')
 
-module.exports = function(pool) {
-    let controller = new FramedataController(pool)
+module.exports = function($store) {
+    let controller = new FramedataController($store)
 
     router.get('/', (req, res) => {
         controller.getAllData()

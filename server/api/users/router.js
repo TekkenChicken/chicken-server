@@ -4,8 +4,8 @@ const router    = express.Router()
 
 const UsersController = require('./controller.js')
 
-module.exports = function(pool) {
-    let controller = new UsersController(pool)
+module.exports = function($store) {
+    let controller = new UsersController($store)
 
     router.post('/', (req, res) => {
         const options = {
