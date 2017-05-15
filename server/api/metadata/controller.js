@@ -1,4 +1,4 @@
-const _CharactersTable  = 'Characters_TC'
+const CHAR_TABLE  = 'Characters_TC'
 
 class MetadataController {
     constructor(store) {
@@ -6,7 +6,7 @@ class MetadataController {
     }
 
     getMetadata() {
-        const query = `SELECT * FROM ${_CharactersTable}`
+        const query = `SELECT * FROM ${CHAR_TABLE}`
 
         return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {

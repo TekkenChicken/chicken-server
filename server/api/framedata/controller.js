@@ -2,8 +2,8 @@
 const mysql = require('mysql')
 
 //Database Table Names
-const _CharactersTable  = 'Characters_TC'
-const _AttacksTable     = 'Attacks_TC'
+const CHAR_TABLE  = 'Characters_TC'
+const ATTACKS_TABLE     = 'Attacks_TC'
 
 class FramedataController {
     constructor(store) {
@@ -14,8 +14,8 @@ class FramedataController {
         //Fetch frame data by character label
         let query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
-        + `FROM ${_CharactersTable} AS characters `
-        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id=attacks.character_id `
+        + `FROM ${CHAR_TABLE} AS characters `
+        + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id=attacks.character_id `
 
 
         let id = mysql.escape(identifier)
@@ -37,13 +37,13 @@ class FramedataController {
                     }
 
                     if(results[0]) {
-                        let name = results[0].name;
-                        let label = results[0].label;
+                        let name = results[0].name
+                        let label = results[0].label
 
                         let data = results.reduce((acc, row) => {
                             acc.push({
                                 notation: row.notation,
-                                hitLevel: row.hit_level,
+                                hit_level: row.hit_level,
                                 damage: row.damage,
                                 speed: row.speed,
                                 on_block: row.on_block,
@@ -70,8 +70,8 @@ class FramedataController {
     getAllData() {
         const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
-        + `FROM ${_CharactersTable} AS characters `
-        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
+        + `FROM ${CHAR_TABLE} AS characters `
+        + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id = attacks.character_id`
 
         return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {
@@ -111,7 +111,48 @@ class FramedataController {
         })
     }
 
+    updateData(options) {
+        const notation = options.notation
+        const character_id = options.character_id
+
+        const newMove = Object.assign({}, options.newMove, {character_id: character_id})
+        return new Promise((resolve, reject) => {
+            if(!this.$store.isValidSession(options.session)) {
+                resolve(false)
+                return;
+            }
+            else {
+                this.$store.getDatabaseConnection().then((connection) => {
+                    const updateMoveQuery = mysql.format(`UPDATE ${ATTACKS_TABLE} SET ? WHERE character_id = ? AND notation = ?`, [newMove, character_id, notation])
+
+                    connection.query(updateMoveQuery, (err, results) => {
+                        if(err) throw err;
+
+                        resolve(true)
+                    })
+                }, err => reject(err))
+            }
+        })
+    }
+
 
 }
 
 module.exports = FramedataController
+
+//Private Utility
+
+function buildInsertQuery(options) {
+    let keys = Object.keys(options);
+
+    let columns = `${keys[0]}`
+    let data = `'${options[keys[0]]}'`
+
+    for(let i = 1; i < keys.length; i++) {
+        columns = columns.concat(`,${keys[i]}`)
+        data = data.concat(`,'${options[keys[i]]}'`)
+    }
+
+
+    return `INSERT INTO ${ATTACKS_TABLE} (${columns}) VALUES (${data});`
+}
