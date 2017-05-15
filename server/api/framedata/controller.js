@@ -139,20 +139,3 @@ class FramedataController {
 }
 
 module.exports = FramedataController
-
-//Private Utility
-
-function buildInsertQuery(options) {
-    let keys = Object.keys(options);
-
-    let columns = `${keys[0]}`
-    let data = `'${options[keys[0]]}'`
-
-    for(let i = 1; i < keys.length; i++) {
-        columns = columns.concat(`,${keys[i]}`)
-        data = data.concat(`,'${options[keys[i]]}'`)
-    }
-
-
-    return `INSERT INTO ${ATTACKS_TABLE} (${columns}) VALUES (${data});`
-}
