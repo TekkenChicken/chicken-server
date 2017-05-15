@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Tekken Chicken Web App Server",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node ./node_modules/mocha/bin/mocha",
     "init": "node server/database/init.js",
     "start": "node server/server.js"
   },
@@ -15,5 +15,8 @@
     "express": "^4.15.2",
     "mysql": "^2.13.0",
     "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^3.3.0"
   }
 }
