@@ -49,24 +49,21 @@ let ServerStore = (function(){
             return session;
         },
 
-        isValidSession(accountName, accessToken) {
-            let session = sessions.get(accountName)
-            if(!session) {
-                return false
+        isValidSession(options) {
+            const accountName = options.accountName
+            const accessToken = options.accessToken
+            
+            if(sessions.has(accountName)) {
+                let session = sessions.get(accountName)
+                if(accessToken == session.accessToken) {
+                    let isExpired = Date.now() > session.expirationTime
+                    if(!isExpired) {
+                        return true
+                    }
+                }
             }
 
-            if(session.accessToken != accessToken) {
-                return false
-            }
-
-            let isExpired = (Date.now() > session.expirationTime)
-
-            if(isExpired) {
-                sessions.delete(accountName)
-                return false
-            }
-
-            return true
+            return false
         }
 
     }
