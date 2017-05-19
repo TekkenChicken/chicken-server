@@ -13,6 +13,16 @@ const _PORT     = process.env.DB_PORT || 3306
 
 let ServerStore = (function(){
 
+    const constants = {
+        CHARACTERS_TABLE: 'Characters_TC',
+        ATTACKS_TABLE: 'Attacks_TC',
+        PROPERTIES_TABLE: 'Properties_TC',
+        ATTACK_PROPERTIES_TABLE: 'Attack_Properties_TC',
+        USERS_TABLE: 'Users_TC',
+        PERMISSIONS_TABLE: 'Permissions_TC',
+        USER_PERMISSIONS_TABLE: 'Permissions_Users_TC'
+    }
+
     let pool = mysql.createPool({
         user: _USER,
         password: _PASS,
@@ -68,6 +78,7 @@ let ServerStore = (function(){
 
     }
 
+    store.constants = constants
     return store
 })()
 
