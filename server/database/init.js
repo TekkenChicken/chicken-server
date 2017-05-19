@@ -49,30 +49,16 @@ let pool = mysql.createPool({
 })
 
 
-//Helper Function
-function buildInsertQuery(table, options) {
-    let keys = Object.keys(options);
-
-    let columns = `(${keys[0]}`
-    let data = `('${options[keys[0]]}'`
-
-    for(let i = 1; i < keys.length; i++) {
-        columns = columns.concat(`,${keys[i]}`)
-        data = data.concat(`,'${options[keys[i]]}'`)
-    }
-
-    columns = columns.concat(')')
-    data = data.concat(')')
-
-
-    return `INSERT INTO ${table} ${columns} VALUES ${data};`
-}
-
 //Insert Character Data
+const AttackProperties = [
+]
+
 function insertData() { 
     const characters = require('./json/framedata.js')
     var completedCharacters = 0;
 
+
+    let errorMessages = [];
     for(character of characters) {
         const name = character.metadata.name
         const label = character.metadata.character
@@ -85,40 +71,40 @@ function insertData() {
         pool.getConnection((err, connection) => {
             connection.query(characterQuery, (err, results) => {
                 if(err) {
-                    console.log(`Error creating character ${name}.\nError: ${err.message}`)
-                    
-                    connection.release()
-                    return;
+                    errorMessages.push('Error creating character ${name}.\nError: ${err.message}')
                 }
-                //Character created
-                //Insert move data
-                console.log(`Inserting move data for ${name}`)
+                 else {
+                    //Insert move data
+                    console.log(`Inserting move data for ${name}`)
 
-                let id = (results.insertId)
-                for(let i = 0; i < data.length; i++) {
-                    let move = data[i]
-                    move.character_id = id
-
-                    const moveQuery = buildInsertQuery(Schema.FrameData.tables.Attacks, move)
-                    let query = connection.query(moveQuery, (err) => {
-                        if(err) {
-                            console.log(`Error inserting move. Query: ${moveQuery}\nError: ${err.message}`)
-                            connection.release()
-                            return;
-                        }
-
-                        //Let go of connection after final query
-                        if(i == data.length - 1) {
-                            completedCharacters++
-                            console.log(`${name} completed. ${completedCharacters}/${characters.length}`)
-                            connection.release()
-
-                            if(completedCharacters == characters.length) {
-                                pool.end()
+                    let id = (results.insertId)
+                    for(let i = 0; i < data.length; i++) {
+                        let move = data[i]
+                        move.character_id = id
+                        move.attack_num = i + 1;
+                        const moveQuery = buildInsertQuery(Schema.FrameData.tables.Attacks, move)
+                        let query = connection.query(moveQuery, (err) => {
+                            if(err) {
+                                errorMessages.push(`Move Insertion Error: ${err.message}\nQuery: ${query}\nCharacter: ${name}, Attack: ${move.notation}`)
+                                failedInserts++;
                             }
-                        }
-                    })
+                            //Let go of connection after final query
+                            if(i == data.length - 1) {
+                                completedCharacters++
+                                console.log(`${name} completed. ${completedCharacters}/${characters.length}`)
+                                connection.release()
 
+                                if(completedCharacters == characters.length) {
+                                    pool.end()
+                                   if(errorMessages.length > 0) {
+                                        console.log(errorMessages)
+                                        fs.writeFileSync('./errors.txt', errorMessages.join('\n'), {flag: fs.O_CREAT});
+                                    }
+                                }
+                            }
+                        })
+
+                    }
                 }
             })
         })
@@ -168,7 +154,7 @@ pool.getConnection((err, connection) => {
     connection.query(Schema.Users, (err) => {
         if(err) {
             if(err.code == 'ER_TABLE_EXISTS_ERROR') {
-                console.log(`ERROR: Table already exists: ${Schema.Users.table.Users}`)
+                console.log(`ERROR: Table already exists: ${Schema.Users}`)
 
                 connection.release()
                 return;
@@ -183,3 +169,22 @@ pool.getConnection((err, connection) => {
         connection.release()
     })
 })
+
+//Helper Function
+function buildInsertQuery(table, options) {
+    let keys = Object.keys(options);
+
+    let columns = `(${keys[0]}`
+    let data = `('${options[keys[0]]}'`
+
+    for(let i = 1; i < keys.length; i++) {
+        columns = columns.concat(`,${keys[i]}`)
+        data = data.concat(`,'${options[keys[i]]}'`)
+    }
+
+    columns = columns.concat(')')
+    data = data.concat(')')
+
+
+    return `INSERT INTO ${table} ${columns} VALUES ${data};`
+}
