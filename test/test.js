@@ -43,12 +43,14 @@ describe('Framedata API Controller', function() {
         on_block: '-7',
         on_hit: 'KND',
         on_ch: 'KND',
-        notes: 'Boy this shit high crush'
+        notes: 'Boy this shit high crush',
+        attack_num: 1
     }
 
-    beforeEach('Insert test data', function(done) {
+    beforeEach('Insert test frame data', function(done) {
 
         pool.getConnection((err, connection) => {
+            if(err) throw err;
             connection.query(`INSERT INTO ${CHARACTERS_TABLE} SET ?`, testCharacter, (err, result) => {
                 if(err) throw err;
                 testCharacter.id = result.insertId
@@ -64,7 +66,7 @@ describe('Framedata API Controller', function() {
         })
     })
 
-    afterEach('Delete test data', function(done) {
+    afterEach('Delete test frame data', function(done) {
         pool.getConnection((err, connection) => {
             connection.query(`DELETE FROM ${ATTACKS_TABLE} WHERE character_id = ?`, [testAttack.character_id], (err) => {
                 if(err) throw err;
@@ -123,9 +125,13 @@ describe('Framedata API Controller', function() {
 
             let options = {
                 session: testSession,
-                character_id: testAttack.character_id,
-                notation: testAttack.notation,
-                newMove: newAttack
+                updates: [
+                    {
+                        character_id: testAttack.character_id,
+                        attack_num: testAttack.attack_num,
+                        data: { speed: '16' }
+                    }
+                ]
             }
 
             return controller.updateData(options).then((success) =>{
@@ -138,8 +144,6 @@ describe('Framedata API Controller', function() {
                         connection.query(`SELECT * FROM ${ATTACKS_TABLE} WHERE character_id = ? AND notation = ?`, [newAttack.character_id, newAttack.notation], (err, results) => {
                             if(err) reject(err)
 
-                            console.log(newAttack.character_id)
-                            console.log(newAttack.notation)
                             assert.deepEqual(results[0], newAttack, 'We expect the new move returned by the query ')
 
                             connection.query(`SELECT * FROM ${ATTACKS_TABLE} WHERE character_id = ? AND notation = ?`, [testAttack.character_id, testAttack.notation], (err, results) => {
@@ -158,12 +162,15 @@ describe('Framedata API Controller', function() {
 
         it('should not update data session is invalid', function() {
                 let newAttack = Object.assign({}, testAttack, {speed: '16'})
-
                 let options = {
                     session: {accessToken: 'not a real token', accountName: 'Test Session'},
-                    character_id: testAttack.character_id,
-                    notation: testAttack.notation,
-                    newMove: newAttack
+                    updates: [
+                        {
+                            character_id: testAttack.character_id,
+                            attack_num: testAttack.attack_num,
+                            data: { speed: '16' }
+                        }
+                    ]
                 }
 
             return controller.updateData(options).then((success) => {

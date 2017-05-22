@@ -2,8 +2,8 @@
 const mysql = require('mysql')
 
 //Database Table Names
-const _CharactersTable  = 'Characters_TC'
-const _AttacksTable     = 'Attacks_TC'
+const CHAR_TABLE  = 'Characters_TC'
+const ATTACKS_TABLE     = 'Attacks_TC'
 
 class FramedataController {
     constructor(store) {
@@ -13,9 +13,9 @@ class FramedataController {
     getCharacterData(identifier) {
         //Fetch frame data by character label
         let query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
-        + `FROM ${_CharactersTable} AS characters `
-        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id=attacks.character_id `
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num "
+        + `FROM ${CHAR_TABLE} AS characters `
+        + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id=attacks.character_id `
 
 
         let id = mysql.escape(identifier)
@@ -37,19 +37,20 @@ class FramedataController {
                     }
 
                     if(results[0]) {
-                        let name = results[0].name;
-                        let label = results[0].label;
+                        let name = results[0].name
+                        let label = results[0].label
 
                         let data = results.reduce((acc, row) => {
                             acc.push({
                                 notation: row.notation,
-                                hitLevel: row.hit_level,
+                                hit_level: row.hit_level,
                                 damage: row.damage,
                                 speed: row.speed,
                                 on_block: row.on_block,
                                 on_hit: row.on_hit,
                                 on_ch: row.on_ch,
-                                notes: row.notes
+                                notes: row.notes,
+                                attack_num: row.attack_num
                             })
 
                             return acc
@@ -70,8 +71,8 @@ class FramedataController {
     getAllData() {
         const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
         + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
-        + `FROM ${_CharactersTable} AS characters `
-        + `INNER JOIN ${_AttacksTable} AS attacks on characters.id = attacks.character_id`
+        + `FROM ${CHAR_TABLE} AS characters `
+        + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id = attacks.character_id`
 
         return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {
@@ -108,6 +109,48 @@ class FramedataController {
                     return;
                 })
             }, err => reject(err))
+        })
+    }
+
+    updateData(options) {
+        const session = options.session
+        const updates = options.updates
+
+
+        return new Promise((resolve, reject) => {
+            //Build update query
+            let updateQuery = ''
+
+            for(let update of updates) {
+                let query = mysql.format(`UPDATE ${ATTACKS_TABLE} SET ? WHERE character_id = ? AND attack_num = ?`, [update.data, update.character_id, update.attack_num])
+                query += ';'
+                
+                if(update.properties) {
+                    for(let addProp of update.properties.add) {
+                        query += mysql.format(`INSERT INTO ${PROPERTIES_TABLE} SET attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, addProp])
+                        query += ';'
+                    }
+
+                    for(let delProp of update.properties.del) {
+                        query += mysql.format(`DELETE FROM ${ATTACKS_PROPERTIES_TABLE} WHERE attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, delProp])
+                        query += ';'
+                    }
+                }
+                updateQuery += query
+            }
+
+            if(this.$store.isValidSession(session)) {
+                this.$store.getDatabaseConnection().then((connection) => {
+                    connection.query(updateQuery, (err) => {
+                        if(err) throw err
+
+                        resolve(true)
+                    })
+                })
+            }
+            else {
+                resolve(false)
+            }
         })
     }
 

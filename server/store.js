@@ -13,6 +13,16 @@ const _PORT     = process.env.DB_PORT || 3306
 
 let ServerStore = (function(){
 
+    const constants = {
+        CHARACTERS_TABLE: 'Characters_TC',
+        ATTACKS_TABLE: 'Attacks_TC',
+        PROPERTIES_TABLE: 'Properties_TC',
+        ATTACK_PROPERTIES_TABLE: 'Attack_Properties_TC',
+        USERS_TABLE: 'Users_TC',
+        PERMISSIONS_TABLE: 'Permissions_TC',
+        USER_PERMISSIONS_TABLE: 'Permissions_Users_TC'
+    }
+
     let pool = mysql.createPool({
         user: _USER,
         password: _PASS,
@@ -49,28 +59,26 @@ let ServerStore = (function(){
             return session;
         },
 
-        isValidSession(accountName, accessToken) {
-            let session = sessions.get(accountName)
-            if(!session) {
-                return false
+        isValidSession(options) {
+            const accountName = options.accountName
+            const accessToken = options.accessToken
+            
+            if(sessions.has(accountName)) {
+                let session = sessions.get(accountName)
+                if(accessToken == session.accessToken) {
+                    let isExpired = Date.now() > session.expirationTime
+                    if(!isExpired) {
+                        return true
+                    }
+                }
             }
 
-            if(session.accessToken != accessToken) {
-                return false
-            }
-
-            let isExpired = (Date.now() > session.expirationTime)
-
-            if(isExpired) {
-                sessions.delete(accountName)
-                return false
-            }
-
-            return true
+            return false
         }
 
     }
 
+    store.constants = constants
     return store
 })()
 
