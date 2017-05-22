@@ -44,6 +44,7 @@ describe('Framedata API Controller', function() {
         on_hit: 'KND',
         on_ch: 'KND',
         notes: 'Boy this shit high crush',
+        properties: null,
         attack_num: 1
     }
 
@@ -88,7 +89,7 @@ describe('Framedata API Controller', function() {
     describe('#getCharacterData()', function() {
         it('returns data of a single character identifed by id', function() {
             return controller.getCharacterData(testCharacter.id).then((data) => {
-                let expectedAttackData = Object.assign({}, testAttack)
+                let expectedAttackData = Object.assign({}, testAttack, {properties: []})
                 delete expectedAttackData.character_id;
 
                 let expectedFormat = {
@@ -103,7 +104,7 @@ describe('Framedata API Controller', function() {
 
         it('returns data of a single character identifed by label', function() {
             return controller.getCharacterData(testCharacter.label).then((data) => {
-                let expectedAttackData = Object.assign({}, testAttack)
+                let expectedAttackData = Object.assign({}, testAttack, {properties: []})
                 delete expectedAttackData.character_id;
 
                 let expectedFormat = {

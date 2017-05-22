@@ -13,7 +13,7 @@ class FramedataController {
     getCharacterData(identifier) {
         //Fetch frame data by character label
         let query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num "
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num, attacks.properties "
         + `FROM ${CHAR_TABLE} AS characters `
         + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id=attacks.character_id `
 
@@ -39,8 +39,14 @@ class FramedataController {
                     if(results[0]) {
                         let name = results[0].name
                         let label = results[0].label
+                        
 
                         let data = results.reduce((acc, row) => {
+                            let properties = []
+                            if(row.properties) {
+                                properties = row.properties.split('|').map(prop => decodeURI(prop))
+                            }
+
                             acc.push({
                                 notation: row.notation,
                                 hit_level: row.hit_level,
@@ -50,7 +56,8 @@ class FramedataController {
                                 on_hit: row.on_hit,
                                 on_ch: row.on_ch,
                                 notes: row.notes,
-                                attack_num: row.attack_num
+                                attack_num: row.attack_num,
+                                properties: properties
                             })
 
                             return acc
@@ -70,7 +77,7 @@ class FramedataController {
 
     getAllData() {
         const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.properties "
         + `FROM ${CHAR_TABLE} AS characters `
         + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id = attacks.character_id`
 
@@ -90,7 +97,11 @@ class FramedataController {
                             acc[row.label] = { name: row.name, label: row.label, data: [] }
                         }
 
-                        //PUT THE FRAME DATA SORT MAGIC HERE
+                        let properties = []
+                        if(row.properties) {
+                            properties = row.properties.split('|').map(prop => decodeURI(prop))
+                        }
+
                         acc[row.label].data.push({
                             notation: row.notation,
                             hitLevel: row.hit_level,
@@ -99,6 +110,7 @@ class FramedataController {
                             on_block: row.on_block,
                             on_hit: row.on_hit,
                             on_ch: row.on_ch,
+                            properties: properties,
                             notes: row.notes
                         })
                         return acc
@@ -111,6 +123,7 @@ class FramedataController {
             }, err => reject(err))
         })
     }
+
 
     updateData(options) {
         const session = options.session
@@ -125,17 +138,6 @@ class FramedataController {
                 let query = mysql.format(`UPDATE ${ATTACKS_TABLE} SET ? WHERE character_id = ? AND attack_num = ?`, [update.data, update.character_id, update.attack_num])
                 query += ';'
                 
-                if(update.properties) {
-                    for(let addProp of update.properties.add) {
-                        query += mysql.format(`INSERT INTO ${PROPERTIES_TABLE} SET attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, addProp])
-                        query += ';'
-                    }
-
-                    for(let delProp of update.properties.del) {
-                        query += mysql.format(`DELETE FROM ${ATTACKS_PROPERTIES_TABLE} WHERE attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, delProp])
-                        query += ';'
-                    }
-                }
                 updateQuery += query
             }
 
