@@ -13,7 +13,7 @@ class FramedataController {
     getCharacterData(identifier) {
         //Fetch frame data by character label
         let query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes "
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num "
         + `FROM ${CHAR_TABLE} AS characters `
         + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id=attacks.character_id `
 
@@ -49,7 +49,8 @@ class FramedataController {
                                 on_block: row.on_block,
                                 on_hit: row.on_hit,
                                 on_ch: row.on_ch,
-                                notes: row.notes
+                                notes: row.notes,
+                                attack_num: row.attack_num
                             })
 
                             return acc
@@ -112,25 +113,43 @@ class FramedataController {
     }
 
     updateData(options) {
-        const notation = options.notation
-        const character_id = options.character_id
+        const session = options.session
+        const updates = options.updates
 
-        const newMove = Object.assign({}, options.newMove, {character_id: character_id})
+
         return new Promise((resolve, reject) => {
-            if(!this.$store.isValidSession(options.session)) {
-                resolve(false)
-                return;
-            }
-            else {
-                this.$store.getDatabaseConnection().then((connection) => {
-                    const updateMoveQuery = mysql.format(`UPDATE ${ATTACKS_TABLE} SET ? WHERE character_id = ? AND notation = ?`, [newMove, character_id, notation])
+            //Build update query
+            let updateQuery = ''
 
-                    connection.query(updateMoveQuery, (err, results) => {
-                        if(err) throw err;
+            for(let update of updates) {
+                let query = mysql.format(`UPDATE ${ATTACKS_TABLE} SET ? WHERE character_id = ? AND attack_num = ?`, [update.data, update.character_id, update.attack_num])
+                query += ';'
+                
+                if(update.properties) {
+                    for(let addProp of update.properties.add) {
+                        query += mysql.format(`INSERT INTO ${PROPERTIES_TABLE} SET attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, addProp])
+                        query += ';'
+                    }
+
+                    for(let delProp of update.properties.del) {
+                        query += mysql.format(`DELETE FROM ${ATTACKS_PROPERTIES_TABLE} WHERE attack_num = ?, character_id = ?, property = ?`, [update.attack_num, update.character_id, delProp])
+                        query += ';'
+                    }
+                }
+                updateQuery += query
+            }
+
+            if(this.$store.isValidSession(session)) {
+                this.$store.getDatabaseConnection().then((connection) => {
+                    connection.query(updateQuery, (err) => {
+                        if(err) throw err
 
                         resolve(true)
                     })
-                }, err => reject(err))
+                })
+            }
+            else {
+                resolve(false)
             }
         })
     }

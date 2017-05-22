@@ -23,16 +23,14 @@ CREATE TABLE Attacks_TC (
 ) CHARACTER SET utf8;
 
 CREATE TABLE Properties_TC (
-    id INT(3) NOT NULL AUTO_INCREMENT,
-    label VARCHAR(50) NOT NULL,
     name VARCHAR(50) NOT NULL,
-    PRIMARY KEY(id)
+    PRIMARY KEY(name)
 ) CHARACTER SET utf8;
 
 CREATE TABLE Properties_Attacks_TC (
     character_id INT(3) NOT NULL,
     attack_num INT(5) NOT NULL,
-    property_id INT(3) NOT NULL,
+    property VARCHAR(50),
     FOREIGN KEY (character_id, attack_num) REFERENCES Attacks_TC(character_id, attack_num),
-    FOREIGN KEY (property_id) REFERENCES Properties_TC(id) 
+    FOREIGN KEY (property) REFERENCES Properties_TC(name) 
 ) CHARACTER SET utf8;
