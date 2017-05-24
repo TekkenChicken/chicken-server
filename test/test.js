@@ -21,10 +21,11 @@ let pool = mysql.createPool({
     multipleStatements: true
 })
 
-const CHARACTERS_TABLE = 'Characters_TC'
-const ATTACKS_TABLE = 'Attacks_TC'
-const USERS_TABLE = 'Users_TC'
+const CHARACTERS_TABLE_NAME = 'Characters_TC'
+const ATTACKS_TABLE_NAME = 'Attacks_TC'
+const USERS_TABLE_NAME = 'Users_TC'
 
+/*
 describe('Framedata API Controller', function() {
 
     //Test Setup
@@ -188,3 +189,69 @@ describe('Framedata API Controller', function() {
         })
     })
 })
+*/
+
+let Character = require('../server/classes/character.js');
+
+describe('Character Class', function() {
+    let testData = {
+        "metadata": {
+            "ver": "0.4",
+            "game": "t7",
+            "character": "akuma",
+            "name": "Akuma",
+            "type": "normal"
+        },
+        "moves": [{
+            "notation": "SS+4",
+            "hit_level": "h",
+            "damage": "12",
+            "speed": "14(15~)",
+            "on_block": "-13",
+            "on_hit": "+2",
+            "on_ch": "+2",
+            "notes": null
+        }]
+    }
+
+    let testCharacter = new Character(testData);
+
+    describe('#buildInsertQuery()', function() {
+        it('should return formatted MySQL query based on object data', function() {
+            let expectedQuery = new RegExp(`INSERT INTO ${CHARACTERS_TABLE_NAME} \\(name, label, game, last_updated\\) VALUES \\(\\'${testData.metadata.name}\\', \\'${testData.metadata.character}\\', \\'${testData.metadata.game}\\', [0-9]+\\)`);
+            return testCharacter.buildInsertQuery().then((query) => {
+                assert( query.match(expectedQuery) );
+            });
+        });
+    });
+
+    describe('#buildInsertQueryForAttacks()', function() {
+        //Character needs an ID for these
+        let attacksTestData = {
+            "metadata": {
+                "ver": "0.4",
+                "game": "t7",
+                "character": "akuma",
+                "name": "Akuma",
+                "type": "normal",
+                "id": 1
+            },
+            "moves": [{
+                "notation": "SS+4",
+                "hit_level": "h",
+                "damage": "12",
+                "speed": "14(15~)",
+                "on_block": "-13",
+                "on_hit": "+2",
+                "on_ch": "+2",
+                "notes": null
+            }]
+        }
+        let attacksTestCharacter = new Character(attacksTestData);
+
+        it('should return formatted MySQL query based on data in moves array', function() {
+            let attacks = attacksTestData.moves[0];
+            let expectedQuery = 'INSERT INTO ${ATTACKS_TABLE_NAME} (character_id, notation, hit_level, damage, speed, on_block, on_hit, on_ch, notes, properties, attack_num) VALUES (${attacksTestData.metadata.id}, ${attack.notation,} ${attack.hit_level}, ${attack.damage}, ${attack.speed}, ${attack.on_block}, ${attack.on_hit}, ${attack.on_ch}, ${attack.notes}, ${attack.properties}, ${attack.attack_num})';
+        });
+    });
+});
