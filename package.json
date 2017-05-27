@@ -9,6 +9,10 @@
   },
   "author": "Stephen Stafford",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/srstafford1996/chicken-server"
+  },
   "dependencies": {
     "bcrypt": "^1.0.2",
     "body-parser": "^1.17.1",
