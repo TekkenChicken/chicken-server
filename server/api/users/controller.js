@@ -1,5 +1,5 @@
 //Node modules
-const bcrypt    = require('bcrypt')
+const bcrypt    = require('bcryptjs')
 const uuid      = require('uuid/v4')
 const mysql     = require('mysql')
 
@@ -24,10 +24,10 @@ class UsersController {
         const displayName   = mysql.format(options.displayName)
 
         const existingUserCheck = `SELECT accountName, email, displayName ` +
-                                    `FROM ${_USERTABLE} ` + 
+                                    `FROM ${_USERTABLE} ` +
                                     `WHERE (accountName = '${accountName}' OR email ='${email}' OR displayName = '${displayName}')`
 
-        return new Promise((resolve, reject) => {           
+        return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(existingUserCheck, (err, results) => {
                     //If this query returned results then there is a user with a matching field
@@ -39,10 +39,10 @@ class UsersController {
 
                         if(mysql.format(user.accountName) == accountName) {
                             sharedField = 'account name'
-                        } 
+                        }
                         else if(mysql.format(user.email) == email) {
                             sharedField = 'email address'
-                        } 
+                        }
                         else if(mysql.format(user.displayName) == displayName) {
                             sharedField = 'display name'
                         }
@@ -60,7 +60,7 @@ class UsersController {
                         }
 
                         hashedPass = mysql.format(hashedPass)
-                        const insertQuery = `INSERT INTO ${_USERTABLE} ` + 
+                        const insertQuery = `INSERT INTO ${_USERTABLE} ` +
                                         `(\`accountName\`, \`hashedPass\`, \`email\`, \`displayName\`) ` +
                                         `VALUES ('${accountName}', '${hashedPass}', '${email}', '${displayName}')`
 
@@ -68,7 +68,7 @@ class UsersController {
                             connection.release()
                             if(err) {
                                 reject(err)
-                                return;  
+                                return;
                             }
 
                             //Build new session
@@ -116,7 +116,7 @@ class UsersController {
                         return;
                     })
                 })
-            }, err => reject(err))          
+            }, err => reject(err))
         })
     }
 
