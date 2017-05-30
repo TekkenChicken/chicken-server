@@ -1,7 +1,10 @@
+DROP TABLE Attacks_TC;
+DROP TABLE Characters_TC;
+
 CREATE TABLE Characters_TC (
     id INT(3) NOT NULL AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL,
-    label VARCHAR(10) NOT NULL,
+    label VARCHAR(30) NOT NULL,
     game VARCHAR(4) NOT NULL,
     last_updated INT(11) NOT NULL,
     PRIMARY KEY(id)
