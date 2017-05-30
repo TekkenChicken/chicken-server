@@ -3,6 +3,7 @@ const fs        = require('fs')
 const path      = require('path')
 const mysql     = require('mysql')
 
+const JSONDIR = path.join(__dirname, 'json')
 /*
 //Database Schema
 const Schema = {
@@ -54,7 +55,8 @@ const AttackProperties = [
 ]
 
 function insertData() { 
-    const characters = require('./json/framedata.js')
+    const characterFiles = fs.readdirSync(JSONDIR)
+    const characters = characterFiles.map((filename) => require(path.join(JSONDIR, filename)))
     var completedCharacters = 0;
 
 
@@ -110,7 +112,6 @@ function insertData() {
         })
     }
 }
-
 
 const initTimestamp = Math.floor(Date.now() / 1000)
 
@@ -187,4 +188,5 @@ function buildInsertQuery(table, options) {
 
 
     return `INSERT INTO ${table} ${columns} VALUES ${data};`
+
 }
