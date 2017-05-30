@@ -1,7 +1,3 @@
-DROP TABLE Permissions_Users_TC;
-DROP TABLE Permissions_TC;
-DROP TABLE Users_TC;
-
 CREATE TABLE Users_TC (
     accountName VARCHAR(26) PRIMARY KEY NOT NULL,
     hashedPass BINARY(60) NOT NULL,
