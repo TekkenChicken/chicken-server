@@ -1,6 +1,3 @@
-DROP TABLE Attacks_TC;
-DROP TABLE Characters_TC;
-
 CREATE TABLE Characters_TC (
     id INT(3) NOT NULL AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL,

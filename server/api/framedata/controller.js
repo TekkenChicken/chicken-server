@@ -104,7 +104,7 @@ class FramedataController {
 
                         acc[row.label].data.push({
                             notation: row.notation,
-                            hitLevel: row.hit_level,
+                            hit_level: row.hit_level,
                             damage: row.damage,
                             speed: row.speed,
                             on_block: row.on_block,
