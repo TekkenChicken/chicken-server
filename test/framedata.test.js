@@ -85,7 +85,7 @@ describe('Framedata API Controller', function() {
     const testStore = require('./teststore.js')
     const testSession = testStore.newSession('Test Session')
     //Actual testing
-    controller = new FramedataController(testStore)
+    let controller = new FramedataController(testStore)
 
     describe('#getCharacterData()', function() {
         it('returns data of a single character identifed by id', function() {

@@ -24,11 +24,19 @@ class MetadataController {
     }
 
     _format(data) {
+      let lastUpdated = 0
+
         let formatted = data.reduce((acc, row) => {
+            // Keep track of last updates across each character and store the most recent
+            if(row.last_updated > lastUpdated) {
+              lastUpdated = row.last_updated
+            }
+
             acc[row.label] = row
             return acc
         }, {})
 
+        formatted.last_updated = lastUpdated
         return formatted
     }
 }
