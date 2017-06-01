@@ -8,7 +8,9 @@ module.exports = function($store) {
     let controller = new MetadataController($store)
 
     router.get('/', (req, res) => {
-        controller.getMetadata().then(data => {
+        controller.getMetadata()
+        .then( res.setHeader("Cache-Control", "public, max-age=600") ) // Cache endpoint via nginx for 10 minutes
+        .then(data => {
             res.json(data)
         }, err => {
             res.send(err)
