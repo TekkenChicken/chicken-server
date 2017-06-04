@@ -69,6 +69,7 @@ describe('Framedata API Controller', function() {
 
     afterEach('Delete test frame data', function(done) {
         pool.getConnection((err, connection) => {
+          if(err) throw err;
             connection.query(`DELETE FROM ${ATTACKS_TABLE} WHERE character_id = ?`, [testAttack.character_id], (err) => {
                 if(err) throw err;
                 connection.query(`DELETE FROM ${CHARACTERS_TABLE} WHERE id = ${testCharacter.id}`, [testCharacter.id], (err) => {
@@ -84,7 +85,7 @@ describe('Framedata API Controller', function() {
     const testStore = require('./teststore.js')
     const testSession = testStore.newSession('Test Session')
     //Actual testing
-    controller = new FramedataController(testStore)
+    let controller = new FramedataController(testStore)
 
     describe('#getCharacterData()', function() {
         it('returns data of a single character identifed by id', function() {
@@ -93,7 +94,7 @@ describe('Framedata API Controller', function() {
                 delete expectedAttackData.character_id;
 
                 let expectedFormat = {
-                    data: [expectedAttackData], 
+                    data: [expectedAttackData],
                     label: testCharacter.label,
                      name: testCharacter.name
                  }
@@ -108,7 +109,7 @@ describe('Framedata API Controller', function() {
                 delete expectedAttackData.character_id;
 
                 let expectedFormat = {
-                    data: [expectedAttackData], 
+                    data: [expectedAttackData],
                     label: testCharacter.label,
                      name: testCharacter.name
                  }
@@ -137,7 +138,7 @@ describe('Framedata API Controller', function() {
 
             return controller.updateData(options).then((success) =>{
                 assert(success, 'We expect the Promise to resolve a true boolean value')
-                
+
                 return new Promise((resolve, reject) => {
                     pool.getConnection((err, connection) => {
                         if(err) reject(err)
@@ -177,11 +178,12 @@ describe('Framedata API Controller', function() {
             return controller.updateData(options).then((success) => {
                 assert(!success, 'We expect the Promise to resolve a false boolean value')
 
-                pool.getConnection((connection) => {
-                    connection.query(`SELECT * FROM ${ATTACKS_TABLE} WHERE notation = ? AND character_id = ?`, (err, results) => {
+                pool.getConnection((err, connection) => {
+                  if(err) throw err;
+                    connection.query(`SELECT * FROM ${ATTACKS_TABLE} WHERE notation = ? AND character_id = ?`, [newAttack.notation, newAttack.character_id], (err, results) => {
                         if(err) throw err;
 
-                        assert.deepEquals(results[0], testAttack, 'We expect attack to not be updated')
+                        assert.deepEqual(results[0], testAttack, 'We expect attack to not be updated')
                     })
                 })
             })
