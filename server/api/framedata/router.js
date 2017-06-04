@@ -9,12 +9,14 @@ module.exports = function($store) {
 
     router.get('/', (req, res) => {
         controller.getAllData()
+        .then( res.setHeader("Cache-Control", "public, max-age=600") )  // Cache endpoint via nginx for 10 minutes
         .then( data => res.json(data) )
         .catch( err => res.status(500).send(err) )
     })
 
     router.get('/:id', (req, res) => {
         controller.getCharacterData(req.params.id)
+        .then( res.setHeader("Cache-Control", "public, max-age=600") ) // Cache endpoint via nginx for 10 minutes
         .then( data => res.json(data) )
         .catch( err => res.status(500).send(err) )
     })
