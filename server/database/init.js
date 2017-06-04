@@ -107,6 +107,12 @@ function insertData() {
                         })
 
                     }
+
+                    if(data.length == 0) {
+                        completedCharacters++
+                        console.log(`${name} completed. ${completedCharacters}/${characters.length}`)
+                                
+                    }
                 }
             })
         })
