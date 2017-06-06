@@ -11,6 +11,7 @@ class MetadataController {
         return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(query, (err, results) => {
+                    connection.release();
                     if(err) {
                         reject(rer)
                         return;
