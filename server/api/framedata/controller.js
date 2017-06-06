@@ -31,11 +31,11 @@ class FramedataController {
         return new Promise((resolve, reject) => {
             this.$store.getDatabaseConnection().then((connection) => {
                 connection.query(query, (err, results) => {
+                    connection.release();
                     if(err) {
                         reject(err)
                         return;
                     }
-
                     if(results[0]) {
                         let name = results[0].name
                         let label = results[0].label
@@ -144,6 +144,7 @@ class FramedataController {
             if(this.$store.isValidSession(session)) {
                 this.$store.getDatabaseConnection().then((connection) => {
                     connection.query(updateQuery, (err) => {
+                        connection.release();
                         if(err) throw err
 
                         resolve(true)
