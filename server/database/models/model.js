@@ -7,6 +7,8 @@ class Model {
             this.data[fieldName] = data[fieldName] ? data[fieldName] : null;
         }
 
+        this.id = data.id ? data.id : null;
+
         this._tableName = tableName;
         this._fieldNames = fieldNames;
     }
@@ -15,4 +17,15 @@ class Model {
         const query = mysql.format(`INSERT INTO ${this._tableName} SET ?`, this.data);
         return query;
     }
+
+    updateQuery() {
+        const query = mysql.format(`UPDATE ${this._tableName} WHERE id = ? SET ?`, this.id, this.data);
+        return query;
+    }
+
+    getData() {
+        return Object.assign({}, this.data, {id: this.id});
+    }
 }
+
+module.exports = Model;

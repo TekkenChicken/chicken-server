@@ -1,14 +1,14 @@
 CREATE TABLE Characters_TC (
-    id INT(3) NOT NULL AUTO_INCREMENT,
+    id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL,
-    label VARCHAR(10) NOT NULL,
+    label VARCHAR(20) NOT NULL,
     game VARCHAR(4) NOT NULL,
-    last_updated INT(11) NOT NULL,
     PRIMARY KEY(id)
 ) CHARACTER SET utf8;
 
 CREATE TABLE Attacks_TC (
-    character_id INT(3) NOT NULL,
+    id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    character_id INT(10) UNSIGNED NOT NULL,
     notation VARCHAR(100) NOT NULL,
     hit_level VARCHAR(50),
     damage VARCHAR(50),
@@ -19,6 +19,13 @@ CREATE TABLE Attacks_TC (
     notes TEXT,
     properties TEXT,
     attack_num INT(5) NOT NULL,
-    PRIMARY KEY (character_id, attack_num),
+    PRIMARY KEY (id),
     FOREIGN KEY (character_id) REFERENCES Characters_TC(id)
+) CHARACTER SET utf8;
+
+CREATE TABLE FramedataMeta_TC (
+    id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(20) NOT NULL,
+    value VARCHAR(120) NOT NULL,
+    PRIMARY KEY(id)
 ) CHARACTER SET utf8;
