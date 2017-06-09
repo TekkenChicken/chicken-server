@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node ./node_modules/mocha/bin/mocha",
     "init": "node server/database/init.js",
+    "update": "node server/database/update.js",
     "start": "node server/server.js"
   },
   "author": "Stephen Stafford",
