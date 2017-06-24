@@ -14,7 +14,10 @@ class Model {
     }
 
     insertQuery() {
-        const query = mysql.format(`INSERT INTO ${this._tableName} SET ?`, this.data);
+        let dataToBeInserted = this.data;
+        delete dataToBeInserted.id;
+
+        const query = mysql.format(`INSERT INTO ${this._tableName} SET ?`, dataToBeInserted);
         return query;
     }
 
