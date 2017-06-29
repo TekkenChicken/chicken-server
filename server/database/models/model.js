@@ -7,6 +7,7 @@ class Model {
             this.data[fieldName] = data[fieldName] ? data[fieldName] : null;
         }
 
+        this.pool = pool ? pool : null;
         this.id = data.id ? data.id : null;
 
         this._tableName = tableName;
@@ -22,7 +23,7 @@ class Model {
     }
 
     updateQuery() {
-        const query = mysql.format(`UPDATE ${this._tableName} WHERE id = ? SET ?`, this.id, this.data);
+        const query = mysql.format(`UPDATE ${this._tableName} WHERE id = ? SET ?`, [this.id, this.data]);
         return query;
     }
 
