@@ -6,7 +6,7 @@
 ## Intro
 After installing all dependencies, you can use the database initialization tool to create the schema and fill it with frame data.
 ```
-node server/database/init.js
+npm run init
 ```
 
 **NOTE: This server uses the following environment variables to connect to your MySQL database:**

@@ -7,7 +7,6 @@ class Model {
             this.data[fieldName] = data[fieldName] ? data[fieldName] : null;
         }
 
-        this.pool = pool ? pool : null;
         this.id = data.id ? data.id : null;
 
         this._tableName = tableName;

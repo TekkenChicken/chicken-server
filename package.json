@@ -4,7 +4,7 @@
   "description": "Tekken Chicken Web App Server",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/mocha",
-    "init": "node server/database/init/init.js",
+    "init": "node database/init/init.js",
     "start": "node server/server.js"
   },
   "author": "Stephen Stafford",

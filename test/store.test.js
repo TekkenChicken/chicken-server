@@ -4,8 +4,8 @@ const assert = require('assert');
 
 //Dependencies
 const ServerStore = require('../store');
-const CharacterModel = require('../server/database/models/character.js');
-const AttackModel = require('../server/database/models/attack.js');
+const CharacterModel = require('../database/models/character.js');
+const AttackModel = require('../database/models/attack.js');
 //Database Constants
 const _USER     = process.env.DB_USER;
 const _PASS     = process.env.DB_PASS;

@@ -1,6 +1,7 @@
 const mysql = require('mysql');
-const CharacterModel = require('../server/database/models/character.js');
+
 const CHAR_TABLE_NAME = 'Characters_TC';
+const CharacterModel = require('../database/models/character.js');
 
 class ServerStore {
     constructor(dbConfig) {
