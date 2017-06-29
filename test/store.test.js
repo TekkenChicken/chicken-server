@@ -1,5 +1,6 @@
 //Node modules
 const mysql = require('mysql');
+const assert = require('assert');
 
 //Dependencies
 const ServerStore = require('../store');
@@ -58,17 +59,16 @@ describe('ServerStore', function() {
             return new Promise((resolve, reject) => {
                 testPool.query(testCharacter1.insertQuery(), (err, results) => {
                     if(err) throw err;
-                    testCharacter1.data.id = results.insertId;
+                    testCharacter1.id = results.insertId;
 
                     testPool.query(testCharacter2.insertQuery(), (err, results) => {
                         if(err) throw err;
-                        testCharacter2.data.id = results.insertId;
+                        testCharacter2.id = results.insertId;
 
-                        character1Attacks = buildTestAttacks(testCharacter1.data.id, NUM_OF_ATTACKS);
-                        character2Attacks = buildTestAttacks(testCharacter2.data.id, NUM_OF_ATTACKS);
+                        character1Attacks = buildTestAttacks(testCharacter1.id, NUM_OF_ATTACKS);
+                        character2Attacks = buildTestAttacks(testCharacter2.id, NUM_OF_ATTACKS);
 
                         let attacksToBeInserted = [...character1Attacks, ...character2Attacks];
-                        console.log(attacksToBeInserted);
                         const attackInsertQuery = attacksToBeInserted.reduce((acc, attack) => {
                             acc += attack.insertQuery() + ';';
                             return acc;
@@ -85,31 +85,92 @@ describe('ServerStore', function() {
     });
 
     it('Should load characters on initialization', function(done) {
-        let store = new ServerStore(dbConfig);
-        assert.deepEqual(store._characters, [testCharacter1, testCharacter2], 'We expect the store to load inserted characters from database on instantiatoin.');
+
+        testPool.query('SELECT * FROM Characters_TC', function(err, results) {
+            if(err) throw err;
+            let characters = results.map(result => new CharacterModel(result));
+            let store = new ServerStore(dbConfig);
+            assert.deepEqual(store._characters, characters, 'We expect the store to load inserted characters from database on instantiatoin.');
+        });
         done();
     });
 
     describe('#getAllFramedata()', function() {
 
-        it('Should return all attack data keyed by character label', function(done) {
-            let store = new ServerStore(dbConfig);
-            let framedata = store.getAllFramedata();
+        it('Should return a promise that resolves all attack data keyed by character label', function(done) {
 
-            assert.deepEqual(framedata[testCharacter1.getData().label], character1Attacks, 'We expect the character 1 attacks to be returned.');
-            assert.deepEqual(framedata[testCharacter2.getData().label], character2Attacks, 'We expect the character 2 attacks to be returned.');
-            done();
+            let testCharacter1Current = testCharacter1;
+            let testCharacter2Current = testChracter2;
+
+            testPool.query('SELECT * FROM Attacks_TC', function(err, results) {
+                if(err) throw err;
+
+                let framedataActual = results.reduce((acc, data) => {
+                    if(acc[data.character_id]) {
+                        acc[data.character_id].push(new AttackModel(data));
+                    }
+                    else {
+                        acc[data.character_id] = [new AttackModel(data)];
+                    }
+
+                }, {});
+
+                let formattedChar1 = {
+                    name: testCharacter1Current.name, 
+                    label: testCharacter1Current.label, 
+                    data: framedataActual[testCharacter1Current.Id]
+                };
+
+                let formattedChar2 = {
+                    name: testCharacter2Current.name, 
+                    label: testCharacter2Current.label, 
+                    data: framedataActual[testCharacter2Current.Id]
+                };
+
+                let store = new ServerStore(dbConfig);
+                store.getAllFramedata().then((framedataTest) => {
+                    assert.deepEqual(framedataTest[testCharacter1Label], formattedChar1, 'We expect the character 1 attacks to be returned.');
+                    assert.deepEqual(framedataTest[testCharacter2Label], formattedChar2, 'We expect the character 2 attacks to be returned.');
+                    done();   
+                });
+
+            });
+
         });
     });
 
     describe('#getFramedataByLabel()', function() {
 
         it('Should return the selected character data', function(done) {
-            let store = new ServerStore(dbConfig);
-            let framedata = store.getFramedataByLabel(testCharacter1.getData().label);
+            let testCharacter1Current = testCharacter1;
+            let testCharacter2Current = testChracter2;
 
-            assert.deepEqual(framedata, character1Attacks, 'We expect the attacks returned to match character 1');
-            done();
+            testPool.query('SELECT * FROM Attacks_TC', function(err, results) {
+                if(err) throw err;
+
+                let framedataActual = results.reduce((acc, data) => {
+                    if(acc[data.character_id]) {
+                        acc[data.character_id].push(new AttackModel(data));
+                    }
+                    else {
+                        acc[data.character_id] = [new AttackModel(data)];
+                    }
+
+                }, {});
+
+                let formattedChar1 = {
+                    name: testCharacter1Current.name, 
+                    label: testCharacter1Current.label, 
+                    data: framedataActual[testCharacter1Current.Id]
+                };
+
+                let store = new ServerStore(dbConfig);
+                store.getAllFramedata(testCharacter1Current.label).then((framedataTest) => {
+                    assert.deepEqual(framedataTest, formattedChar1, 'We expect the test character 1 attacks to be returned.');
+                    done();   
+                });
+
+            });
         });
     });
 });
