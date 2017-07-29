@@ -1,0 +1,27 @@
+
+version: '2'
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    environment:
+      DB_PASS: neverguess123
+      DB_USER: root
+      DB_HOST: db
+      NODE_ENV: development
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: neverguess123
+      MYSQL_DATABASE: tekkenchicken
+    volumes:
+    - db:/var/lib/mysql
+
+volumes:
+  db: {}
