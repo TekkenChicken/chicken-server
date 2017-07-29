@@ -6,6 +6,6 @@ ADD package.json ./
 RUN npm install --production
 ADD ./server ./server
 
-EXPOSE 5000
-ENV PORT 5000
+EXPOSE 3000
+ENV PORT 3000
 CMD npm start
