@@ -21,10 +21,16 @@ DB_PORT(Optional, defaults to "3306")
 ## Updating Frame Data
 When frame data updates in the `harounb` repo, we need to pull down the latest version and restart the server. The frame data files are stored as json in a submodule and then injected into mysql via an update script.
 
+1. Grab the latest data from the repo
+
 ````
 git submodule update --recursive --remote
 npm update
 ````
+
+2. Update the timestamp for UPDATE TC_Characters SET 'last_updated' = <somebignumber> WHERE id=2
+
+This will bump Alisa's timestamp to a new number (somebignumber) which will also bump the overall version and cause the app to pull down new info the next time it loads.
 
 ## API Requests
 
