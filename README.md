@@ -18,6 +18,14 @@ DB_HOST(Optional, defaults to "localhost")
 DB_PORT(Optional, defaults to "3306")
 ```
 
+## Updating Frame Data
+When frame data updates in the `harounb` repo, we need to pull down the latest version and restart the server. The frame data files are stored as json in a submodule and then injected into mysql via an update script.
+
+````
+git submodule update --recursive --remote
+npm update
+````
+
 ## API Requests
 
 ### Metadata Request
