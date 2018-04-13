@@ -13,7 +13,7 @@ class FramedataController {
     getCharacterData(identifier) {
         //Fetch frame data by character label
         let query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num, attacks.properties "
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.attack_num, attacks.properties, attacks.gif_url "
         + `FROM ${CHAR_TABLE} AS characters `
         + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id=attacks.character_id `
 
@@ -57,6 +57,7 @@ class FramedataController {
                                 on_ch: row.on_ch,
                                 notes: row.notes,
                                 attack_num: row.attack_num,
+                                preview_url: row.gif_url,
                                 properties: properties
                             })
 
@@ -77,7 +78,7 @@ class FramedataController {
 
     getAllData() {
         const query = "SELECT characters.label, characters.name, attacks.notation, attacks.damage, attacks.speed,"
-        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.properties "
+        + "attacks.hit_level, attacks.on_block, attacks.on_hit, attacks.on_ch, attacks.notes, attacks.properties, attacks.gif_url "
         + `FROM ${CHAR_TABLE} AS characters `
         + `INNER JOIN ${ATTACKS_TABLE} AS attacks on characters.id = attacks.character_id`
 
@@ -111,7 +112,8 @@ class FramedataController {
                             on_hit: row.on_hit,
                             on_ch: row.on_ch,
                             properties: properties,
-                            notes: row.notes
+                            notes: row.notes,
+                            preview_url: row.gif_url
                         })
                         return acc
 

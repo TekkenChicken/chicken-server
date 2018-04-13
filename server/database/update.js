@@ -5,21 +5,9 @@ const mysql     = require('mysql')
 
 const JSONDIR = path.join(__dirname, 'tekken-frame-data', 't7')
 const METADIR = path.join(__dirname, 'json')
-/*
-//Database Schema
-const Schema = {
-    Characters : fs.readFileSync(path.join(__dirname, 'schema/characters.sql'), {encoding: 'utf-8'}),
-    Attacks : fs.readFileSync(path.join(__dirname, 'schema/attacks.sql'), {encoding: 'utf-8'}),
-    Users : fs.readFileSync(path.join(__dirname, 'schema/users.sql'), {encoding: 'utf-8'})
-}
-//Database table names
-const Tables = {
-    Characters : 'Characters_TC',
-    Attacks : 'Attacks_TC',
-    Users : 'Users_TC'
-}
+const GIFSDIR = path.join(__dirname, 'gifs')
 
-*/
+
 const Schema = {
     FrameData: {
         tables: {Characters: 'Characters_TC', Attacks: 'Attacks_TC'},
@@ -50,15 +38,43 @@ let pool = mysql.createPool({
     multipleStatements: true
 })
 
+
 const attackFiles = fs.readdirSync(JSONDIR)
 const attackData = attackFiles.map((filename) => require(path.join(JSONDIR, filename)))
-let attacks = {};
+let attacks = {}
+
+const gifFiles = fs.readdirSync(GIFSDIR)
+const gifData = gifFiles.map((filename) => require(path.join(GIFSDIR, filename)))
+let gifs = gifData.reduce((acc, value) => {
+    acc[value.name] = value.gifs
+    return acc
+}, {})
+
+console.log("AttackFiles: ", attackFiles)
+console.log("gifFiles: ", gifFiles)
+
 for(let data of attackData)
 {
     if(data.metadata.type == 'normal') {
-        attacks[data.metadata.character] = data.moves.map((move, index) => Object.assign({}, move, {attack_num: index + 1}));
+        let charGifs = gifs[data.metadata.character]
+        if(!charGifs) {
+            console.log("No gif data for " + data.metadata.character)
+        }
+        
+        attacks[data.metadata.character] = data.moves.map((move, index) => {
+
+            let gifUrl = null
+
+            if(charGifs && charGifs[move.notation])
+                gifUrl = charGifs[move.notation]
+
+            return Object.assign({}, move, {attack_num: index + 1, gif_url: gifUrl})
+        })
+
     }
 }
+
+console.log(Object.keys(attacks))
 
 const charactersQuery = `SELECT id, label FROM ${Schema.FrameData.tables.Characters}`
 pool.getConnection((err, connection) => {

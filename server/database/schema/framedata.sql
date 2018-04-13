@@ -19,6 +19,7 @@ CREATE TABLE Attacks_TC (
     notes TEXT,
     properties TEXT,
     attack_num INT(5) NOT NULL,
+    gif_url VARCHAR(100) DEFAULT NULL,
     PRIMARY KEY (character_id, attack_num),
     FOREIGN KEY (character_id) REFERENCES Characters_TC(id)
 ) CHARACTER SET utf8;
